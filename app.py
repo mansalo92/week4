@@ -9,11 +9,13 @@ from sqlalchemy import create_engine
 
 engine = create_engine('postgresql://postgres:violista92@dsa.cqdpo7wibptj.us-east-2.rds.amazonaws.com/extended_4')
 df = pd.read_sql("SELECT * from aggr", engine.connect(), parse_dates=('OCCURRED_ON_DATE',))
-df['YearMonth']= df['Entry time'].dt.year.astype(str) + '-' + df['Entry time'].dt.month.astype(str)
+
 
 #df = pd.read_csv('aggr.csv', parse_dates=['Entry time'])
 
 df['Entry time'] = pd.to_datetime(df['Entry time'])
+
+df['YearMonth']= df['Entry time'].dt.year.astype(str) + '-' + df['Entry time'].dt.month.astype(str)
 
 # Helper functions
 
