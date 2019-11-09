@@ -10,7 +10,10 @@ from sqlalchemy import create_engine
 engine = create_engine('postgresql://postgres:violista92@dsa.cqdpo7wibptj.us-east-2.rds.amazonaws.com/extended_4')
 df = pd.read_sql("SELECT * from aggr", engine.connect(), parse_dates=('OCCURRED_ON_DATE',))
 
+
 #df = pd.read_csv('aggr.csv', parse_dates=['Entry time'])
+
+df['YearMonth'] = pd.to_datetime(df['Entry time'].map(lambda x: "{}-{}".format(x.year, x.month)))
 
 token='pk.eyJ1IjoibWFuc2FsbzkyIiwiYSI6ImNrMmhwcXQ4aDE4Y3QzY3RnaWJkeHFwZWYifQ.SwjwUBtHACf_b2J5FFRmog'
 
