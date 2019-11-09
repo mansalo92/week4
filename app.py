@@ -15,6 +15,87 @@ df = pd.read_sql("SELECT * from aggr", engine.connect(), parse_dates=('OCCURRED_
 
 df['Entry time'] = pd.to_datetime(df['Entry time'])
 
+# funciones auxiliares
+
+def get_date_range(exchange=None):
+    dff = df.copy() 
+    if exchange:
+        dff = dff[df['Exchange'] == exchange]
+    return dff['Entry time'].min(), dff['Entry time'].max()
+
+
+def filter_df( df=df, exchange=None, margin=None, start_date=None, end_date=None):
+    dff=df.copy()
+    if exchange:
+        dff= dff[dff['Exchange'] ==  exchange]
+    if margin :
+        dff= dff[dff['Margin']== int(margin)]
+    if start_date and end_date:
+        dff= dff[(dff['Entry time']>= start_date) & (dff['Entry time']<=end_date)]
+
+    return dff
+
+
+def monthly_data(exchange, margin, start_date, end_date):
+    
+    dff=filter_df(df, exchange, int(margin), start_date, end_date)        
+    data=[]    
+    for name, group in dff.groupby('YearMonth'):
+        entry_balance = group.tail(1)['Entry balance'].values[0]
+        exit_balance = group.head(1)['Exit balance'].values[0]
+        data.append({
+            'YearMonth': name,
+            'entry': entry_balance,
+            'exit': exit_balance,
+        })
+    return data
+
+
+def calc_btc_returns(dff):
+    btc_start_value = dff.tail(1)['BTC Price'].values[0]
+    btc_end_value = dff.head(1)['BTC Price'].values[0]
+    btc_returns = (btc_end_value * 100/ btc_start_value)-100
+    return btc_returns
+
+
+def calc_strat_returns(dff):
+    start_value = dff.tail(1)['Exit balance'].values[0]
+    end_value = dff.head(1)['Entry balance'].values[0]
+    returns = (end_value * 100/ start_value)-100
+    return returns
+
+
+def calc_returns_over_month(dff):
+    out = []
+
+    for name, group in dff.groupby('YearMonth'):
+        exit_balance = group.head(1)['Exit balance'].values[0]
+        entry_balance = group.tail(1)['Entry balance'].values[0]
+        monthly_return = (exit_balance*100 / entry_balance)-100
+        out.append({
+            'month': name,
+            'entry': entry_balance,
+            'exit': exit_balance,
+            'monthly_return': monthly_return
+        })
+    return out
+
+
+def pnl_types(dff):
+    data=[]
+    for name, group in df.groupby('Trade type'):
+        data.append(
+            go.Bar(x=group['Entry time'],y=group['Pnl (incl fees)'],name=name)
+        )
+    return data
+
+
+
+
+
+
+
+
 token='pk.eyJ1IjoibWFuc2FsbzkyIiwiYSI6ImNrMmhwcXQ4aDE4Y3QzY3RnaWJkeHFwZWYifQ.SwjwUBtHACf_b2J5FFRmog'
 
 app = dash.Dash(__name__, external_stylesheets=['https://codepen.io/uditagarwal/pen/oNvwKNP.css', 'https://codepen.io/uditagarwal/pen/YzKbqyV.css'])
@@ -81,15 +162,7 @@ app.layout = html.Div(children=[
                                     className="six columns card",
                                     figure={})])])])
 
-#Helper Function filter_df
-    
-def filter_df(df,exchange, margin, start_date, end_date):
-    exc = (df['Exchange'] == exchange)
-    marg = (df['Margin'] == int(margin))
-    rang = ((df['Entry time'] > start_date) & (df['Entry time'] <= end_date))
-    return df[(exc & marg & marg)]
-                                                         
-
+                                                        
 #Callback for uptdating date range by exchange select
 
 @app.callback(
@@ -104,35 +177,6 @@ def update_range(value):
     df2 = df[df['Exchange']==value]
     return df2['Entry time'].min(),df2['Entry time'].max()
     
-#Helper Functions to calculate the monthly returns of our strategy and create the candlestick chart
-
-def calc_returns_over_month(df):
-    out = []
-    df['YearMonth']= df['Entry time'].dt.year.astype(str) + '-' + df['Entry time'].dt.month.astype(str)
-    for name, group in df.groupby('YearMonth'):
-        exit_balance = group.head(1)['Exit balance'].values[1]
-        entry_balance = group.tail(1)['Entry balance'].values[1]
-        monthly_return = (exit_balance*100 / entry_balance)-100
-        out.append({
-            'month': name,
-            'entry': entry_balance,
-            'exit': exit_balance,
-            'monthly_return': monthly_return})
-    return out
-
-
-def calc_btc_returns(df):
-    btc_start_value = df.tail(1)['BTC Price'].values[1]
-    btc_end_value = df.head(1)['BTC Price'].values[0]
-    btc_returns = (btc_end_value * 100/ btc_start_value)-100
-    return btc_returns
-
-def calc_strat_returns(df):
-    start_value = df.tail(1)['Exit balance'].values[1]
-    end_value = df.head(1)['Entry balance'].values[1]
-    returns = (end_value * 100/ start_value)-100
-    return returns
-
 #Callback to calculate the monthly returns of our strategy and create the candlestick chart
 
 @app.callback(
