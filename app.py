@@ -110,8 +110,8 @@ def calc_returns_over_month(df):
     out = []
     df['YearMonth']= df['Entry time'].dt.year.astype(str) + '-' + df['Entry time'].dt.month.astype(str)
     for name, group in df.groupby('YearMonth'):
-        exit_balance = group.head(1)['Exit balance'].values[0]
-        entry_balance = group.tail(1)['Entry balance'].values[0]
+        exit_balance = group.head(1)['Exit balance'].values[1]
+        entry_balance = group.tail(1)['Entry balance'].values[1]
         monthly_return = (exit_balance*100 / entry_balance)-100
         out.append({
             'month': name,
@@ -122,14 +122,14 @@ def calc_returns_over_month(df):
 
 
 def calc_btc_returns(df):
-    btc_start_value = df.tail(1)['BTC Price'].values[0]
+    btc_start_value = df.tail(1)['BTC Price'].values[1]
     btc_end_value = df.head(1)['BTC Price'].values[0]
     btc_returns = (btc_end_value * 100/ btc_start_value)-100
     return btc_returns
 
 def calc_strat_returns(df):
-    start_value = df.tail(1)['Exit balance'].values[0]
-    end_value = df.head(1)['Entry balance'].values[0]
+    start_value = df.tail(1)['Exit balance'].values[1]
+    end_value = df.head(1)['Entry balance'].values[1]
     returns = (end_value * 100/ start_value)-100
     return returns
 
