@@ -4,12 +4,11 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objects as go
 import dash_table
+
 from sqlalchemy import create_engine
 
 engine = create_engine('postgresql://postgres:violista92@dsa.cqdpo7wibptj.us-east-2.rds.amazonaws.com/extended_4')
 df = pd.read_sql("SELECT * from aggr", engine.connect(), parse_dates=('OCCURRED_ON_DATE',))
-
-
 
 #df = pd.read_csv('aggr.csv', parse_dates=['Entry time'])
 
@@ -191,16 +190,44 @@ def update_indicators(exchange, leverage, start_date, end_date):
     return f'{btc_returns:0.2f}%', f'{strat_returns:0.2f}%', f'{strat_vs_market:0.2f}%'
 
 
+@app.callback(
+        dash.dependencies.Output('pnl-types', 'figure'),
+       (dash.dependencies.Input('exchange-select', 'value'),
+        dash.dependencies.Input('leverage-select', 'value'),
+        dash.dependencies.Input('date-range', 'start_date'),
+        dash.dependencies.Input('date-range', 'end_date'),))
+def update_bar_chart(exchange, leverage, start_date, end_date):
+    dff = filter_df(df, exchange, leverage, start_date, end_date)
+    chart=pnl_types(dff)   
+    return{'data':chart,'layout': {'title': 'Pnl vs Trade Type','height':500}}
+
+
+@app.callback(
+        dash.dependencies.Output('daily-btc', 'figure'),
+       (dash.dependencies.Input('exchange-select', 'value'),
+        dash.dependencies.Input('leverage-select', 'value'),
+        dash.dependencies.Input('date-range', 'start_date'),
+        dash.dependencies.Input('date-range', 'end_date'),))
+
+def update_line_chart(exchange, leverage, start_date, end_date):
+    dff = filter_df(df, exchange, leverage, start_date, end_date)
+    chart= go.Scatter(x=dff['Entry time'], y=dff['BTC Price'], mode='lines')
+    return {'data':[chart],'layout': {'title': 'Daily  BTC Price','height':500}}
+
+
+@app.callback(
+        dash.dependencies.Output('balance', 'figure'),
+       (dash.dependencies.Input('exchange-select', 'value'),
+        dash.dependencies.Input('leverage-select', 'value'),
+        dash.dependencies.Input('date-range', 'start_date'),
+        dash.dependencies.Input('date-range', 'end_date'),))
+
+def update_balance_chart(exchange, leverage, start_date, end_date):
+    dff = filter_df(df, exchange, leverage, start_date, end_date)
+    chart= go.Line(x=dff['Entry time'], y=dff['Exit balance'])
+    return {'data':[chart],'layout': {'title': 'Balance Overtime','height':500}}
 
 
 
 
-
-
-
-
-
-if __name__ == '__main__':
-    app.run_server(debug=True, host= '0.0.0.0')
-
-               
+if __name__ == '__main__':app.run_server(debug=True)           
