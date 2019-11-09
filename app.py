@@ -13,7 +13,7 @@ df = pd.read_sql("SELECT * from aggr", engine.connect(), parse_dates=('OCCURRED_
 
 #df = pd.read_csv('aggr.csv', parse_dates=['Entry time'])
 
-df['YearMonth'] = pd.to_datetime(df['Entry time'].map(lambda x: "{}-{}".format(x.year, x.month)))
+df['Entry time'] = pd.to_datetime(df['Entry time'])
 
 token='pk.eyJ1IjoibWFuc2FsbzkyIiwiYSI6ImNrMmhwcXQ4aDE4Y3QzY3RnaWJkeHFwZWYifQ.SwjwUBtHACf_b2J5FFRmog'
 
