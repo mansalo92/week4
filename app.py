@@ -31,7 +31,7 @@ def filter_df( df=df, exchange=None, margin=None, start_date=None, end_date=None
     if exchange:
         dff= dff[dff['Exchange'] ==  exchange]
     if margin :
-        dff= dff[dff['Margin']== int(margin)]
+        dff= dff[dff['Margin']== margin]
     if start_date and end_date:
         dff= dff[(dff['Entry time']>= start_date) & (dff['Entry time']<=end_date)]
 
@@ -40,7 +40,7 @@ def filter_df( df=df, exchange=None, margin=None, start_date=None, end_date=None
 
 def monthly_data(exchange, margin, start_date, end_date):
     
-    dff=filter_df(df, exchange, int(margin), start_date, end_date)        
+    dff=filter_df(df, exchange, margin, start_date, end_date)        
     data=[]    
     for name, group in dff.groupby('YearMonth'):
         entry_balance = group.tail(1)['Entry balance'].values[0]
